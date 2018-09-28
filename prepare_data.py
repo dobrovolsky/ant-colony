@@ -21,7 +21,7 @@ class Downloader:
     CITIES_TYPES = {'PPLA', 'PPLC'}  # city and capital
     CITY_NAME = 2
     LAT = 4
-    long = 5
+    LNG = 5
     OBJECT_TYPE = 7
 
     @property
@@ -56,7 +56,7 @@ class Downloader:
         with open(self.raw_cities_data, newline='') as csv_file_r:
             with open(CITIES_DATA, 'w', newline='') as csv_file_w:
 
-                fieldnames = ['name', 'lat', 'long']
+                fieldnames = ['name', 'lat', 'lng']
                 writer = csv.DictWriter(csv_file_w, fieldnames=fieldnames)
                 writer.writeheader()
 
@@ -65,7 +65,7 @@ class Downloader:
                     data = {
                         'name': row[self.CITY_NAME],
                         'lat': row[self.LAT],
-                        'long': row[self.long],
+                        'lng': row[self.LNG],
                     }
                     log.msg(f'Write row to file {CITIES_DATA}', **data)
                     writer.writerow(data)
@@ -95,7 +95,7 @@ class DistanceMatrix:
             self.cities = [row for row in reader]
 
     def get_point(self, city) -> Point:
-        return city['lat'], city['long']
+        return city['lat'], city['lng']
 
     def init_matrix(self):
         if self.cities:
