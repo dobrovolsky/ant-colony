@@ -110,7 +110,8 @@ class DistanceMatrix:
             reader = csv.DictReader(csv_file_r)
             self.cities = [row for row in reader]
 
-    def get_point(self, city) -> Point:
+    @staticmethod
+    def get_point(city) -> Point:
         return float(city['lat']), float(city['lng'])
 
     def init_matrix(self):
