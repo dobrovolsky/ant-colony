@@ -5,16 +5,18 @@ from collections import OrderedDict
 from typing import Tuple, List, Dict
 
 import geopy.distance
+import googlemaps
 import requests
 import structlog
 
-log = structlog.get_logger()
+import settings
+
 Point = Tuple[float, float]
 
-COUNTRY_CODE = 'LV'
-CITIES_DATA = f'{COUNTRY_CODE}.csv'
-CITIES_DISTANCE = f'{COUNTRY_CODE}_DISTANCE.csv'
-IS_SIMPLE = True
+log = structlog.get_logger()
+
+if not settings.IS_SIMPLE_DISTANCE:
+    gmaps = googlemaps.Client(key=settings.API_KEY)
 
 
 class Downloader:
@@ -26,36 +28,35 @@ class Downloader:
 
     @property
     def zip_filename(self) -> str:
-        return f'{COUNTRY_CODE}.zip'
+        return f'{settings.COUNTRY_CODE}.zip'
 
     @property
     def raw_cities_data(self) -> str:
-        return f'{COUNTRY_CODE}.txt'
+        return f'{settings.COUNTRY_CODE}.txt'
 
     @property
     def url(self) -> str:
         return f'http://download.geonames.org/export/dump/{self.zip_filename}'
 
     def download_cities_information(self):
-        log.msg(f'start downloading cities information for {COUNTRY_CODE}')
+        log.info(f'start downloading cities information for {settings.COUNTRY_CODE}')
         r = requests.get(self.url, stream=True)
         with open(self.zip_filename, 'wb') as f:
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
-        log.msg('Done')
+        log.info('Done')
 
-        log.msg(f'Extracting data to file {self.raw_cities_data}')
+        log.info(f'Extracting data to file {self.raw_cities_data}')
         with zipfile.ZipFile(self.zip_filename, 'r') as z:
             z.extract(self.raw_cities_data)
 
-        log.msg('Remove temp zip')
+        log.info('Remove temp zip')
         os.remove(self.zip_filename)
 
     def prepare_csv(self):
         with open(self.raw_cities_data, newline='') as csv_file_r:
-            with open(CITIES_DATA, 'w', newline='') as csv_file_w:
-
+            with open(settings.CITIES_DATA, 'w', newline='') as csv_file_w:
                 fieldnames = ['name', 'lat', 'lng']
                 writer = csv.DictWriter(csv_file_w, fieldnames=fieldnames)
                 writer.writeheader()
@@ -67,10 +68,10 @@ class Downloader:
                         'lat': row[self.LAT],
                         'lng': row[self.LNG],
                     }
-                    log.msg(f'Write row to file {CITIES_DATA}', **data)
+                    log.info(f'Write row to file {settings.CITIES_DATA}', **data)
                     writer.writerow(data)
 
-        log.msg(f'Remove temp raw data: {self.raw_cities_data}')
+        log.info(f'Remove temp raw data: {self.raw_cities_data}')
         os.remove(self.raw_cities_data)
 
     def download(self):
@@ -81,25 +82,40 @@ class Downloader:
 class DistanceMatrix:
     cities: List[OrderedDict] = []
     matrix: List[Dict] = []
-    is_simple: bool = IS_SIMPLE
-    source: str = CITIES_DATA
+    source: str = settings.CITIES_DATA
     counter = 0
 
-    @staticmethod
-    def calculate(point1: Point, point2: Point, util='m') -> float:
-        return round(getattr(geopy.distance.vincenty(point1, point2), util), 2)
+    cache = {}
+
+    def calculate(self, point1: Point, point2: Point) -> float:
+        cached_value = self.cache.get((point1, point2), None) or self.cache.get((point2, point1), None)
+
+        if cached_value is not None:
+            log.info(f'Cache hit for ', data=(point1, point2))
+            return cached_value
+
+        if settings.IS_SIMPLE_DISTANCE:
+            distance = round(getattr(geopy.distance.vincenty(point1, point2), 'm'), 2)
+        else:
+            data = gmaps.distance_matrix(point1, point2)
+            log.info(f'Received data from google', data=data)
+            distance = data['rows'][0]['elements'][0]['distance']['value']
+
+        log.info(f'Add to cache ', data=(point1, point2))
+        self.cache[(point1, point2)] = distance
+        return distance
 
     def init_cities(self):
-        with open(CITIES_DATA, newline='') as csv_file_r:
+        with open(settings.CITIES_DATA, newline='') as csv_file_r:
             reader = csv.DictReader(csv_file_r)
             self.cities = [row for row in reader]
 
     def get_point(self, city) -> Point:
-        return city['lat'], city['lng']
+        return float(city['lat']), float(city['lng'])
 
     def init_matrix(self):
         if self.cities:
-            with open(CITIES_DISTANCE, 'w', newline='') as csv_file_w:
+            with open(settings.CITIES_DISTANCE, 'w', newline='') as csv_file_w:
                 fieldnames = ['name'] + [city['name'] for city in self.cities]
                 writer = csv.DictWriter(csv_file_w, fieldnames=fieldnames)
                 writer.writeheader()
@@ -114,7 +130,7 @@ class DistanceMatrix:
                             )
                         })
 
-                    log.msg(f'Write row to file {CITIES_DISTANCE}', **data)
+                    log.info(f'Write row to file {settings.CITIES_DISTANCE}', **data)
                     writer.writerow(data)
 
 
@@ -123,4 +139,3 @@ if __name__ == '__main__':
     dm = DistanceMatrix()
     dm.init_cities()
     dm.init_matrix()
-

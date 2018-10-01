@@ -6,8 +6,9 @@ name = "pypi"
 [packages]
 requests = "*"
 structlog = "*"
-googlemaps = "*"
 geopy = "*"
+googlemaps = "*"
+envparse = "*"
 
 [dev-packages]
 
