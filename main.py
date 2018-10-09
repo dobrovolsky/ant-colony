@@ -31,7 +31,7 @@ def main():
 
 
 if __name__ == '__main__':
-    Downloader().download(limit=24)
+    Downloader().download()
     dm = DistanceMatrix()
     dm.init_cities()
     dm.init_matrix()

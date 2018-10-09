@@ -80,7 +80,7 @@ class Downloader:
         log.info(f'Remove temp raw data: {self.raw_cities_data}')
         os.remove(self.raw_cities_data)
 
-    def download(self, limit=None):
+    def download(self, limit=settings.CITIES_LIMIT):
         self.download_cities_information()
         self.prepare_csv(limit)
 
