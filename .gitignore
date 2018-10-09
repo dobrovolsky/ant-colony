@@ -107,4 +107,5 @@ venv.bak/
 
 # cities data
 *.csv
+*.json
 

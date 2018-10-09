@@ -1,4 +1,5 @@
 import csv
+import json
 import os
 import zipfile
 from collections import OrderedDict
@@ -54,7 +55,7 @@ class Downloader:
         log.info('Remove temp zip')
         os.remove(self.zip_filename)
 
-    def prepare_csv(self):
+    def prepare_csv(self, limit):
         with open(self.raw_cities_data, newline='') as csv_file_r:
             with open(settings.CITIES_DATA, 'w', newline='') as csv_file_w:
                 fieldnames = ['name', 'lat', 'lng']
@@ -62,6 +63,7 @@ class Downloader:
                 writer.writeheader()
 
                 reader = csv.reader(csv_file_r, delimiter='\t')
+                limit_counter = 0
                 for row in filter(lambda x: x[self.OBJECT_TYPE] in self.CITIES_TYPES, reader):
                     data = {
                         'name': row[self.CITY_NAME],
@@ -69,14 +71,18 @@ class Downloader:
                         'lng': row[self.LNG],
                     }
                     log.info(f'Write row to file {settings.CITIES_DATA}', **data)
+                    if limit and limit_counter > limit:
+                        break
+                    else:
+                        limit_counter += 1
                     writer.writerow(data)
 
         log.info(f'Remove temp raw data: {self.raw_cities_data}')
         os.remove(self.raw_cities_data)
 
-    def download(self):
+    def download(self, limit=None):
         self.download_cities_information()
-        self.prepare_csv()
+        self.prepare_csv(limit)
 
 
 class DistanceMatrix:
@@ -116,23 +122,23 @@ class DistanceMatrix:
 
     def init_matrix(self):
         if self.cities:
-            with open(settings.CITIES_DISTANCE, 'w', newline='') as csv_file_w:
-                fieldnames = ['name'] + [city['name'] for city in self.cities]
-                writer = csv.DictWriter(csv_file_w, fieldnames=fieldnames)
-                writer.writeheader()
 
-                for city_y in self.cities:
-                    data = {'name': city_y['name']}
-                    for city_x in self.cities:
-                        data.update({
-                            city_x['name']: self.calculate(
-                                self.get_point(city_y),
-                                self.get_point(city_x)
-                            )
-                        })
+            data = {}
+            for city_y in self.cities:
+                data[city_y['name']] = {
+                    'point': self.get_point(city_y),
+                    'cities': []
+                }
+                for city_x in self.cities:
+                    data[city_y['name']]['cities'].append({
+                        'name': city_x['name'],
+                        'distance': self.calculate(self.get_point(city_y), self.get_point(city_x)),
+                        'point': self.get_point(city_x)
+                    })
 
-                    log.info(f'Write row to file {settings.CITIES_DISTANCE}', **data)
-                    writer.writerow(data)
+            log.info(f'Write to file {settings.CITIES_DISTANCE}', **data)
+            with open(settings.CITIES_DISTANCE, 'w') as json_f:
+                json.dump(data, json_f, indent=4)
 
 
 if __name__ == '__main__':
