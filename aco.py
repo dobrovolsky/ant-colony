@@ -82,14 +82,14 @@ class Ant(object):
         denominator = 0
         for i in self.allowed:
             denominator += self.graph.pheromone[self.current][i] ** self.colony.alpha * self.eta[self.current][
-                                                                                            i] ** self.colony.beta
+                i] ** self.colony.beta
         # noinspection PyUnusedLocal
         probabilities = [0 for i in range(self.graph.rank)]  # probabilities for moving to a node in the next step
         for i in range(self.graph.rank):
             try:
                 self.allowed.index(i)  # test if allowed list contains i
                 probabilities[i] = self.graph.pheromone[self.current][i] ** self.colony.alpha * \
-                    self.eta[self.current][i] ** self.colony.beta / denominator
+                                   self.eta[self.current][i] ** self.colony.beta / denominator
             except ValueError:
                 pass  # do nothing
         # select next node by probability roulette

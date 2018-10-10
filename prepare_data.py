@@ -3,7 +3,11 @@ import json
 import os
 import zipfile
 from collections import OrderedDict
-from typing import Tuple, List, Dict
+from typing import (
+    Tuple,
+    List,
+    Dict,
+)
 
 import geopy.distance
 import googlemaps

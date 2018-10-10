@@ -22,8 +22,14 @@ def main():
         x, y = v['point']
         cities.append((y, x, k))
         cost_matrix.append([city['distance'] for city in v['cities']])
-
-    aco = ACO(100, 10, 1, 10.0, 0.5, 10, 2)
+    aco = ACO(
+        ant_count=100,
+        generations=10,
+        alpha=1,
+        beta=10.0,
+        rho=0.5,
+        q=10,
+        strategy=2)
     graph = Graph(cost_matrix, len(data))
     path, cost = aco.solve(graph)
     print('cost: {}, path: {}'.format(cost, path))
