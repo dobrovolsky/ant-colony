@@ -5,14 +5,14 @@ import structlog
 log = structlog.get_logger()
 
 
-class Graph(object):
+class Graph:
     def __init__(self, cost_matrix: list):
         self.matrix = cost_matrix
         self.rank = len(self.matrix)
         self.pheromone = [[1 / self.rank ** 2 for j in range(self.rank)] for i in range(self.rank)]
 
 
-class ACO(object):
+class ACO:
     def __init__(
             self,
             ant_count: int,
@@ -71,7 +71,7 @@ class ACO(object):
         return best_solution, best_cost
 
 
-class Ant(object):
+class Ant:
     def __init__(self, aco: ACO, graph: Graph):
         self.colony = aco
         self.graph = graph
