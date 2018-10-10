@@ -60,7 +60,7 @@ class ACO(object):
                 # update pheromone
                 ant._update_pheromone_delta()
             self._update_pheromone(graph, ants)
-            # print('generation #{}, best cost: {}, path: {}'.format(gen, best_cost, best_solution))
+            print('generation #{}, best cost: {}, path: {}'.format(gen, best_cost, best_solution))
         return best_solution, best_cost
 
 
