@@ -6,7 +6,7 @@ def plot(cities, path: list):
     y = []
     fig, ax = plt.subplots()
 
-    for city in cities:
+    for i, city in enumerate(cities):
         p_y = city[0]
         p_x = city[1]
         p_name = city[2]
@@ -15,7 +15,7 @@ def plot(cities, path: list):
         y.append(p_y)
         plt.plot(p_x, p_y, 'bo')
 
-        ax.annotate(p_name, (p_x + 0.05, p_y + 0.05))
+        ax.annotate(f'{p_name} ({i})', (p_x + 0.05, p_y + 0.05))
 
     for local_p in range(1, len(path)):
         i = path[local_p - 1]
