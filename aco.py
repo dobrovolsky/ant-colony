@@ -9,13 +9,12 @@ class Graph(object):
         """
         self.matrix = cost_matrix
         self.rank = rank
-        # noinspection PyUnusedLocal
         self.pheromone = [[1 / (rank * rank) for j in range(rank)] for i in range(rank)]
 
 
 class ACO(object):
     def __init__(self, ant_count: int, generations: int, alpha: float, beta: float, rho: float, q: int,
-                 strategy: int):
+                 strategy: int, start_node=0):
         """
         :param ant_count:
         :param generations:
@@ -32,6 +31,7 @@ class ACO(object):
         self.ant_count = ant_count
         self.generations = generations
         self.update_strategy = strategy
+        self.start_node = start_node
 
     def _update_pheromone(self, graph: Graph, ants: list):
         for i, row in enumerate(graph.pheromone):
@@ -49,7 +49,7 @@ class ACO(object):
         best_solution = []
         for gen in range(self.generations):
             # noinspection PyUnusedLocal
-            ants = [_Ant(self, graph) for i in range(self.ant_count)]
+            ants = [Ant(self, graph, start_node=self.start_node) for i in range(self.ant_count)]
             for ant in ants:
                 for i in range(graph.rank - 1):
                     ant._select_next()
@@ -64,8 +64,8 @@ class ACO(object):
         return best_solution, best_cost
 
 
-class _Ant(object):
-    def __init__(self, aco: ACO, graph: Graph):
+class Ant(object):
+    def __init__(self, aco: ACO, graph: Graph, start_node: int):
         self.colony = aco
         self.graph = graph
         self.total_cost = 0.0
@@ -74,10 +74,9 @@ class _Ant(object):
         self.allowed = [i for i in range(graph.rank)]  # nodes which are allowed for the next selection
         self.eta = [[0 if i == j else 1 / graph.matrix[i][j] for j in range(graph.rank)] for i in
                     range(graph.rank)]  # heuristic information
-        start = random.randint(0, graph.rank - 1)  # start from any node
-        self.tabu.append(start)
-        self.current = start
-        self.allowed.remove(start)
+        self.tabu.append(start_node)
+        self.current = start_node
+        self.allowed.remove(start_node)
 
     def _select_next(self):
         denominator = 0
