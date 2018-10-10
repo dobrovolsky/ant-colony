@@ -78,20 +78,20 @@ class Ant(object):
         self.current = start_node
         self.allowed.remove(start_node)
 
+    def get_probability(self, denominator, i):
+        return self.graph.pheromone[self.current][i] ** self.colony.alpha * \
+               self.eta[self.current][i] ** self.colony.beta / denominator
+
     def _select_next(self):
         denominator = 0
         for i in self.allowed:
-            denominator += self.graph.pheromone[self.current][i] ** self.colony.alpha * self.eta[self.current][
-                i] ** self.colony.beta
-        # noinspection PyUnusedLocal
-        probabilities = [0 for i in range(self.graph.rank)]  # probabilities for moving to a node in the next step
-        for i in range(self.graph.rank):
-            try:
-                self.allowed.index(i)  # test if allowed list contains i
-                probabilities[i] = self.graph.pheromone[self.current][i] ** self.colony.alpha * \
-                                   self.eta[self.current][i] ** self.colony.beta / denominator
-            except ValueError:
-                pass  # do nothing
+            denominator += self.graph.pheromone[self.current][i] ** self.colony.alpha * \
+                           self.eta[self.current][i] ** self.colony.beta
+
+        # probabilities for moving to a node in the next step
+        probabilities = [self.get_probability(denominator=denominator, i=i)
+                         if i in self.allowed else 0 for i in range(self.graph.rank)]
+
         # select next node by probability roulette
         selected = 0
         rand = random.random()
