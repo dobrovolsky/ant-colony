@@ -12,7 +12,7 @@ Set env variable:
 $ `pipenv install`  
 $ `python main.py`  
 
-####Result:
+#### Result:
 cost: 1169359.46, path: [24, 20, 12, 2, 13, 6, 21, 5, 8, 4, 10, 1, 3, 9, 18, 11, 16, 0, 17, 22, 23, 19, 14, 15, 7]  
 
 ![](images/plot.png "Plot")
