@@ -41,12 +41,11 @@ class ACO:
         self.run_without_improvement = run_without_improvement
         self.strategy_pheromone_updating = pheromone_strategy
 
-    def update_pheromone(self, graph: Graph, ants: list):
+    def update_pheromone(self, graph: Graph, ant: 'Ant'):
         for i, row in enumerate(graph.pheromone):
             for j, col in enumerate(row):
-                graph.pheromone[i][j] *= self.rho
-                for ant in ants:
-                    graph.pheromone[i][j] += ant.pheromone_delta[i][j]
+                graph.pheromone[i][j] *= 1 - self.rho
+                graph.pheromone[i][j] += ant.pheromone_delta[i][j]
 
     def solve(self, graph: Graph):
         best_cost = float('inf')
@@ -65,7 +64,7 @@ class ACO:
                     count = 0
                     log.info(f'find better solution', cost=best_cost, best_solution=best_solution)
                 ant.update_pheromone_on_path()
-            self.update_pheromone(graph, ants)
+                self.update_pheromone(graph, ant)
             count += 1
 
         return best_solution, best_cost
